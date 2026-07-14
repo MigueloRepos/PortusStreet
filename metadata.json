@@ -1,0 +1,7 @@
+{
+  "name": "Mapa de Calles de Puerto Padre",
+  "description": "Aplicación de mapa interactivo que muestra las calles de Puerto Padre, Las Tunas, Cuba, con información detallada al pasar el cursor.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}

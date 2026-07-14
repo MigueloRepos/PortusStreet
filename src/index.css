@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+.street-line {
+  transition: stroke 0.3s ease, stroke-width 0.3s ease, stroke-opacity 0.3s ease;
+}
+
+@keyframes street-glow {
+  0% { filter: drop-shadow(0 0 2px rgba(239, 68, 68, 0.5)); }
+  50% { filter: drop-shadow(0 0 10px rgba(239, 68, 68, 1)); }
+  100% { filter: drop-shadow(0 0 2px rgba(239, 68, 68, 0.5)); }
+}
+
+.street-hover-glow {
+  animation: street-glow 1.5s infinite ease-in-out;
+}
