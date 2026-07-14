@@ -306,6 +306,8 @@ export default function App() {
   const [hoveredStreetId, setHoveredStreetId] = useState<number | null>(null);
   const [showSidebar, setShowSidebar] = useState(false);
   const [showStatsPanel, setShowStatsPanel] = useState(false);
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleHover = React.useCallback((id: number) => setHoveredStreetId(id), []);
@@ -479,7 +481,7 @@ export default function App() {
           </div>
         </div>
         
-        <div className="w-full md:w-auto md:ml-auto relative flex flex-wrap md:flex-nowrap items-center flex-1 max-w-xl gap-2">
+        <div className="hidden md:flex w-full md:w-auto md:ml-auto relative flex-wrap md:flex-nowrap items-center flex-1 max-w-xl gap-2">
           <div className="flex bg-white/10 rounded-full border border-white/20 p-1 shrink-0 h-[44px]">
             <button
               onClick={() => setDisplayMode('general')}
@@ -614,7 +616,7 @@ export default function App() {
           </div>
         </div>
 
-        <div className="flex-1 relative">
+        <div className="flex-1 relative pb-[64px] md:pb-0">
           {loading && (
             <div className="absolute inset-0 z-[1000] flex flex-col items-center justify-center bg-white/90 backdrop-blur-sm">
             <Loader2 className="w-12 h-12 text-blue-600 animate-spin mb-4" />
@@ -659,6 +661,141 @@ export default function App() {
         </MapContainer>
       </div>
       </div>
+      
+      {/* Mobile Bottom Navigation (Thumb-first) */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-[2000] flex justify-around items-center p-2 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.1)]">
+        <button onClick={() => setShowSidebar(true)} className="flex flex-col items-center p-2 text-gray-500 hover:text-blue-600 transition-colors">
+          <Menu className="w-6 h-6 mb-1" />
+          <span className="text-[10px] font-medium">Lista</span>
+        </button>
+        <button onClick={() => setShowMobileSearch(true)} className="flex flex-col items-center p-2 text-gray-500 hover:text-blue-600 transition-colors">
+          <Search className="w-6 h-6 mb-1" />
+          <span className="text-[10px] font-medium">Buscar</span>
+        </button>
+        <button onClick={() => setShowMobileFilters(true)} className="flex flex-col items-center p-2 text-gray-500 hover:text-blue-600 transition-colors">
+          <Filter className="w-6 h-6 mb-1" />
+          <span className="text-[10px] font-medium">Filtros</span>
+        </button>
+        <button onClick={() => setShowStatsPanel(true)} className="flex flex-col items-center p-2 text-gray-500 hover:text-blue-600 transition-colors">
+          <BarChart2 className="w-6 h-6 mb-1" />
+          <span className="text-[10px] font-medium">Datos</span>
+        </button>
+      </div>
+
+      {/* Mobile Search Modal */}
+      {showMobileSearch && (
+        <div className="fixed inset-0 bg-white z-[3000] flex flex-col md:hidden">
+          <div className="p-4 border-b border-gray-200 flex items-center gap-3 bg-blue-900 text-white">
+            <button onClick={() => setShowMobileSearch(false)} className="p-2 -ml-2 rounded-full hover:bg-white/10 transition-colors">
+              <X className="w-6 h-6" />
+            </button>
+            <div className="relative flex-1">
+              <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-white/60" />
+              <input
+                type="text"
+                autoFocus
+                placeholder="Buscar calle..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 rounded-full bg-white/10 border border-white/20 text-white placeholder:text-white/60 focus:outline-none focus:bg-white/20 transition-all"
+              />
+            </div>
+          </div>
+          <div className="flex-1 overflow-y-auto p-2 bg-gray-50">
+            {filteredStreets.length === 0 ? (
+              <div className="p-8 text-center text-gray-500">No se encontraron calles.</div>
+            ) : (
+              <div className="flex flex-col gap-1">
+                {filteredStreets.slice(0, 50).map(street => (
+                  <button
+                    key={street.id}
+                    onClick={() => {
+                      setHoveredStreetId(street.id);
+                      setShowMobileSearch(false);
+                      // Center map on street using street.positions[0] maybe?
+                    }}
+                    className="flex flex-col p-3 rounded-lg bg-white border border-gray-100 shadow-sm text-left active:bg-blue-50 transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      {getStreetIcon(street.type)}
+                      <span className="font-medium text-sm text-gray-900 truncate">{street.name || 'Calle sin nombre'}</span>
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1 flex justify-between w-full">
+                      <span className="capitalize">{(street.type || '').replace('_', ' ')}</span>
+                      <span>{street.length > 1000 ? (street.length / 1000).toFixed(2) + ' km' : Math.round(street.length) + ' m'}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Filters Overlay */}
+      {showMobileFilters && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-[2999] md:hidden backdrop-blur-sm transition-opacity"
+          onClick={() => setShowMobileFilters(false)}
+        />
+      )}
+
+      {/* Mobile Filters Modal */}
+      {showMobileFilters && (
+        <div className="fixed inset-x-0 bottom-0 bg-white rounded-t-2xl z-[3000] flex flex-col md:hidden shadow-[0_-10px_40px_rgba(0,0,0,0.2)] max-h-[80vh]">
+          <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+            <h2 className="text-lg font-bold text-gray-800">Filtros y Modos</h2>
+            <button onClick={() => setShowMobileFilters(false)} className="p-2 -mr-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors">
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+          <div className="p-4 overflow-y-auto flex flex-col gap-6">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-500 uppercase mb-3">Modo de Transporte</h3>
+              <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
+                <button
+                  onClick={() => setDisplayMode('general')}
+                  className={`flex-1 flex flex-col items-center justify-center p-3 rounded-lg transition-all ${displayMode === 'general' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500'}`}
+                >
+                  <Car className="w-6 h-6 mb-1" />
+                  <span className="text-xs font-medium">General</span>
+                </button>
+                <button
+                  onClick={() => setDisplayMode('cycling')}
+                  className={`flex-1 flex flex-col items-center justify-center p-3 rounded-lg transition-all ${displayMode === 'cycling' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500'}`}
+                >
+                  <Bike className="w-6 h-6 mb-1" />
+                  <span className="text-xs font-medium">Ciclismo</span>
+                </button>
+                <button
+                  onClick={() => setDisplayMode('walking')}
+                  className={`flex-1 flex flex-col items-center justify-center p-3 rounded-lg transition-all ${displayMode === 'walking' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500'}`}
+                >
+                  <Footprints className="w-6 h-6 mb-1" />
+                  <span className="text-xs font-medium">Peatonal</span>
+                </button>
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="text-sm font-semibold text-gray-500 uppercase mb-3">Tipo de Calle</h3>
+              <select
+                value={selectedType}
+                onChange={(e) => setSelectedType(e.target.value)}
+                className="w-full p-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
+              >
+                <option value="all">Todos los tipos</option>
+                {uniqueTypes.map((type: any) => (
+                  <option key={type} value={type} className="capitalize">
+                    {String(type).replace(/_/g, ' ')}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showStatsPanel && (
         <StatsPanel 
           streets={streets} 
